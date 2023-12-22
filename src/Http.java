@@ -1,4 +1,7 @@
 public class Http {
+    public static final String VERSION_1_1 = "HTTP/1.1";
+    public static final int MAX_HEADER_LENGTH = 1024 * 8;
+
     public enum Method {
         GET
     }

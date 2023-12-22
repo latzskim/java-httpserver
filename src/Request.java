@@ -1,8 +1,6 @@
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.Socket;
+import java.io.*;
+import java.net.URI;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -14,14 +12,17 @@ public class Request {
     private final String path;
     private final Map<String, List<String>> headers;
 
-
-    public static Request from(Socket sock) throws IOException {
-        var buffReader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+    public static Request from(InputStream input) throws IOException {
+        var buffReader = new BufferedReader(new InputStreamReader(input));
 
         var requestMeta = buffReader.readLine().split(" ");
         var method = Http.Method.valueOf(requestMeta[0]);
         var path = requestMeta[1];
-        // var httpVer = requestMeta[2];
+        var receivedVersion = requestMeta[2];
+
+        if (!receivedVersion.trim().equals(Http.VERSION_1_1)) {
+            throw new UnsupportedHttpVersionException("Unsupported HTTP request version: " + receivedVersion);
+        }
 
         var headers = new HashMap<String, List<String>>();
         var line = "";
@@ -56,4 +57,7 @@ public class Request {
         return false;
     }
 
+    public <T> T getParam(String param) {
+        return null;
+    }
 }

@@ -1,5 +1,5 @@
 
 @FunctionalInterface
-public interface RequestHandler {
-    Response handle(Request request);
+public interface RequestHandler<T> {
+    Response<T> handle(Request request);
 }
