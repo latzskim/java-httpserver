@@ -43,7 +43,6 @@ public class Server {
     public void run() throws IOException {
         this.state = State.RUNNING;
 
-
         try (ServerSocket socket = new ServerSocket(this.port)) {
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 // TODO: add logs
@@ -64,6 +63,10 @@ public class Server {
                         .start(() -> tryHandleConnection(sock));
             }
         }
+    }
+
+    public void shutdown() {
+        this.state = State.SHUTTING_DOWN;
     }
 
     private void tryHandleConnection(Socket sock) {
@@ -102,18 +105,22 @@ public class Server {
         handleResponse(response, sock.getOutputStream());
     }
 
+    @SuppressWarnings("unchecked")
     private <T> void handleResponse(Response<T> response, OutputStream outputStream) throws SerializeException {
         PrintWriter w = new PrintWriter(outputStream);
 
+        var contentType = getContentType(response);
+
         w.printf("HTTP/1.1 %d %s\r\n", response.getStatus().getCode(), response.getStatus());
-        w.printf("Content-Type: text/plain; charset=UTF-8\r\n");
-        w.printf("\r\n");
+        w.printf("Content-Type: %s; charset=UTF-8\r\n", contentType);
 
         var body = response.getBody();
         if (body == null) {
             w.flush();
             return;
         }
+
+        w.printf("\r\n");
 
         BodySerializer<T> serializer = (BodySerializer<T>) this.serializers.get(body.getClass());
         if (serializer != null) {
@@ -126,6 +133,23 @@ public class Server {
         w.flush();
     }
 
+    private <T> String getContentType(Response<T> response) {
+        if (response.getContentType() != null && !response.getContentType().isBlank()) {
+            return response.getContentType();
+        }
+
+        var body = response.getBody();
+        if (body == null) {
+            return "text/plain";
+        }
+
+        return switch (body) {
+            case String ignored -> "text/plain";
+            case Character ignored -> "text/plain";
+            default -> "application/json";
+        };
+    }
+
     // TODO: take the last handler or throw exception.
     public void addRoute(Http.Method httpMethod, String path, RequestHandler<?> handler) {
         this.handlers.computeIfPresent(httpMethod, ((method, handlers) -> {
@@ -133,6 +157,11 @@ public class Server {
             return handlers;
         }));
     }
+
+    public int getPort() {
+        return this.port;
+    }
+
 
     public static class ServerBuilder {
         private int port;

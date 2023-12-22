@@ -1,15 +1,18 @@
 public class Response<T> {
     private final Http.Status status;
     private final T body;
+    private final String contentType; // TODO: enum?
 
     public Response(Http.Status status) {
         this.status = status;
+        this.contentType = "text/plain";
         this.body = null;
     }
 
     public Response(ResponseBuilder<T> b) {
         this.status = b.status;
         this.body = b.body;
+        this.contentType = b.contentType;
     }
 
 
@@ -25,7 +28,12 @@ public class Response<T> {
         return this.status;
     }
 
+    public String getContentType() {
+        return this.contentType;
+    }
+
     public static class ResponseBuilder<T> {
+        private String contentType;
         private Http.Status status;
 
         private T body;
@@ -38,6 +46,11 @@ public class Response<T> {
 
         public ResponseBuilder<T> body(T body) {
             this.body = body;
+            return this;
+        }
+
+        public ResponseBuilder<T> contentType(String contentType) {
+            this.contentType = contentType;
             return this;
         }
 
