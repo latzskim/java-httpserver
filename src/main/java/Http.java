@@ -16,6 +16,8 @@ public class Http {
         NOT_ALLOWED(405),
 
         // 5xx
+        INTERNAL_SERVER_ERROR(500),
+
         SERVICE_UNAVAILABLE(503);
 
         private final int value;

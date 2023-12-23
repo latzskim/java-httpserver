@@ -48,6 +48,8 @@ class ServerTest {
         HttpResponse<String> response = c.send(request, HttpResponse.BodyHandlers.ofString());
 
         // then:
+        assertEquals(200, response.statusCode());
+
         assertEquals(
                 "text/plain; charset=UTF-8",
                 response.headers().firstValue("Content-Type").orElse("")
@@ -55,4 +57,99 @@ class ServerTest {
         assertEquals("response from integration/plaintext", response.body());
     }
 
+    @Test
+    public void shouldReturnJsonBody() throws IOException, InterruptedException {
+        // given:
+        var uri = String.format("http://localhost:%s/integration/json", runner.getPort());
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(uri))
+                .header("Content-Type", "text/plain")
+                .GET()
+                .build();
+
+        // when:
+        HttpResponse<String> response = c.send(request, HttpResponse.BodyHandlers.ofString());
+
+
+        // then:
+        assertEquals(200, response.statusCode());
+
+        assertEquals(
+                "application/json; charset=UTF-8",
+                response.headers().firstValue("Content-Type").orElse("")
+        );
+        assertEquals("""
+                        {"i":10,"i2":11,"f":12.1,"f2":13.2,"d":14.3,"d2":15.4,"s":"TestStr","c":"T","c2":"2","testEnum":"E2","p":{"x":1,"y":2}}""",
+                response.body());
+    }
+
+    @Test
+    public void shouldReturn404() throws IOException, InterruptedException {
+        var uri = String.format("http://localhost:%s/notfound", runner.getPort());
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(uri))
+                .header("Content-Type", "text/plain")
+                .GET()
+                .build();
+
+        // when:
+        HttpResponse<Void> response = c.send(request, HttpResponse.BodyHandlers.discarding());
+
+        // then:
+        assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    public void shouldReturn500() throws IOException, InterruptedException {
+        var uri = String.format("http://localhost:%s/integration/throwexception", runner.getPort());
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(uri))
+                .header("Content-Type", "text/plain")
+                .GET()
+                .build();
+
+        // when:
+        HttpResponse<Void> response = c.send(request, HttpResponse.BodyHandlers.discarding());
+
+        // then:
+        assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    public void shouldParseQuery() throws IOException, InterruptedException {
+        // given:
+        var query = "&str=CAPITAL" +
+                "&char=T" +
+                "&int=1" +
+                "&bool=true" +
+                "&float=3.14" +
+                "&array=1&array=2&array=3";
+
+        var uri = String.format("http://localhost:%s/integration/query?%s", runner.getPort(), query);
+
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(uri))
+                .header("Content-Type", "text/plain")
+                .GET()
+                .build();
+
+        // when:
+        HttpResponse<String> response = c.send(request, HttpResponse.BodyHandlers.ofString());
+
+
+        // then:
+        assertEquals(200, response.statusCode());
+
+        assertEquals(
+                "text/plain; charset=UTF-8",
+                response.headers().firstValue("Content-Type").orElse("")
+        );
+        assertEquals(
+                "str:CAPITAL,char:T,int:1,bool:true,float:3.14,double:3.14,arr:[1, 2, 3],arrRaw:array=1&array=2&array=3",
+                response.body());
+    }
 }

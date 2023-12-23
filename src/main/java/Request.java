@@ -1,6 +1,7 @@
 import java.io.*;
+
 import java.net.URI;
-import java.net.URL;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -9,15 +10,16 @@ import java.util.stream.Collectors;
 
 public class Request {
     private final Http.Method method;
-    private final String path;
+    private final URI uri;
+    private final Query query;
     private final Map<String, List<String>> headers;
 
-    public static Request from(InputStream input) throws IOException {
+    public static Request from(InputStream input) throws IOException, URISyntaxException {
         var buffReader = new BufferedReader(new InputStreamReader(input));
 
         var requestMeta = buffReader.readLine().split(" ");
         var method = Http.Method.valueOf(requestMeta[0]);
-        var path = requestMeta[1];
+        var uri = requestMeta[1];
         var receivedVersion = requestMeta[2];
 
         if (!receivedVersion.trim().equals(Http.VERSION_1_1)) {
@@ -36,12 +38,13 @@ public class Request {
             headers.put(headerMeta[0].trim(), values);
         }
 
-        return new Request(method, path, headers);
+        return new Request(method, uri, headers);
     }
 
-    public Request(Http.Method method, String path, Map<String, List<String>> headers) {
+    public Request(Http.Method method, String uri, Map<String, List<String>> headers) throws URISyntaxException {
         this.method = method;
-        this.path = path;
+        this.uri = new URI(uri);
+        this.query = new Query(this.uri);
         this.headers = headers;
     }
 
@@ -50,7 +53,7 @@ public class Request {
     }
 
     public String getPath() {
-        return this.path;
+        return this.uri.getPath();
     }
 
     public boolean keepAlive() {
@@ -60,4 +63,10 @@ public class Request {
     public <T> T getParam(String param) {
         return null;
     }
+
+    public Query getQuery() {
+        return this.query;
+    }
 }
+
+

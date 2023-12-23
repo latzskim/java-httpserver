@@ -3,6 +3,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,12 +70,28 @@ public class Server {
         this.state = State.SHUTTING_DOWN;
     }
 
+    public boolean isRunning() {
+        return this.state == State.RUNNING;
+    }
+
     private void tryHandleConnection(Socket sock) {
         try {
             this.handleConnection(sock);
         } catch (Exception e) {
-            // TODO: log?
-            e.printStackTrace();
+            try {
+                // TODO: use INTERNAL_SERVER_ERROR_HANDLER ?
+                // Request is missing in this scope.
+                // Think about refactoring
+                var response = Response.builder()
+                        .status(Http.Status.INTERNAL_SERVER_ERROR)
+                        .build();
+
+                handleResponse(response, sock.getOutputStream());
+            } catch (Exception inEx) {
+                // TODO: logs
+                inEx.printStackTrace();
+                this.state = State.SHUTTING_DOWN;
+            }
         } finally {
             // TODO: finally block will be removed to handle keep-alive?
             try {
@@ -85,7 +102,7 @@ public class Server {
         }
     }
 
-    private void handleConnection(Socket sock) throws IOException, SerializeException {
+    private void handleConnection(Socket sock) throws IOException, SerializeException, URISyntaxException {
         var req = Request.from(sock.getInputStream());
 
         var methodHandlers = this.handlers.get(req.getMethod());
@@ -113,14 +130,13 @@ public class Server {
 
         w.printf("HTTP/1.1 %d %s\r\n", response.getStatus().getCode(), response.getStatus());
         w.printf("Content-Type: %s; charset=UTF-8\r\n", contentType);
+        w.printf("\r\n");
 
         var body = response.getBody();
         if (body == null) {
             w.flush();
             return;
         }
-
-        w.printf("\r\n");
 
         BodySerializer<T> serializer = (BodySerializer<T>) this.serializers.get(body.getClass());
         if (serializer != null) {
