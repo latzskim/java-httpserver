@@ -6,7 +6,6 @@ public class Main {
                 .port(8080)
                 .build();
 
-
         server.run();
     }
 }

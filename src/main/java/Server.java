@@ -24,7 +24,7 @@ public class Server {
 
     private Server(ServerBuilder serverBuilder) {
         this.port = serverBuilder.port;
-        this.defaultSerializer = serverBuilder.defaultSerializer;
+        this.defaultSerializer = serverBuilder.serializer;
 
         this.state = State.READY;
 
@@ -183,21 +183,21 @@ public class Server {
 
     public static class ServerBuilder {
         private int port;
-        private BodySerializer<?> defaultSerializer;
+        private BodySerializer<?> serializer;
 
         public ServerBuilder port(int port) {
             this.port = port;
             return this;
         }
 
-        public ServerBuilder defaultSerializer(BodySerializer<?> defaultSerializer) {
-            this.defaultSerializer = defaultSerializer;
+        public ServerBuilder serializer(BodySerializer<?> serializer) {
+            this.serializer = serializer;
             return this;
         }
 
         public Server build() {
-            if (this.defaultSerializer == null) {
-                this.defaultSerializer = new GsonDefaultSerializer<>();
+            if (this.serializer == null) {
+                this.serializer = new GsonDefaultSerializer<>();
             }
 
             return new Server(this);
