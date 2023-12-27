@@ -18,7 +18,6 @@ public class Server {
     private int port;
     private final Map<Http.Method, Map<String, RequestHandler<?>>> handlers;
     private final Map<java.lang.Class<?>, BodySerializer<?>> serializers;
-
     private final BodySerializer<?> defaultSerializer;
 
     private State state;
@@ -87,6 +86,8 @@ public class Server {
                         .build();
 
                 handleResponse(response, sock.getOutputStream());
+
+                e.printStackTrace();
             } catch (Exception inEx) {
                 // TODO: logs
                 inEx.printStackTrace();
@@ -129,6 +130,7 @@ public class Server {
         var contentType = getContentType(response);
 
         w.printf("HTTP/1.1 %d %s\r\n", response.getStatus().getCode(), response.getStatus());
+        // TODO: consider taking charset value from request.
         w.printf("Content-Type: %s; charset=UTF-8\r\n", contentType);
         w.printf("\r\n");
 

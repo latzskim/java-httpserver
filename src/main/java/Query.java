@@ -50,7 +50,7 @@ public class Query {
         throw new IllegalArgumentException("Unsupported query parameter type: " + clazz.getName());
     }
 
-    public String getRaw(String paramName) {
+    public String raw(String paramName) {
         var param = this.params.get(paramName);
         if (param == null) {
             return "";

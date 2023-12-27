@@ -1,7 +1,8 @@
 public class Response<T> {
     private final Http.Status status;
     private final T body;
-    private final String contentType; // TODO: enum?
+    // TODO: consider making default contentType configurable: text/plain or text/html
+    private final String contentType;
 
     public Response(Http.Status status) {
         this.status = status;

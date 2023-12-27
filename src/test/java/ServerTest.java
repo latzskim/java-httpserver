@@ -152,4 +152,23 @@ class ServerTest {
                 "str:CAPITAL,char:T,int:1,bool:true,float:3.14,double:3.14,arr:[1, 2, 3],arrRaw:array=1&array=2&array=3",
                 response.body());
     }
+
+    @Test
+    public void shouldReturnPOSTBody() throws IOException, InterruptedException {
+        var uri = String.format("http://localhost:%s/integration/echo", runner.getPort());
+
+        var bodyJson = "{\"test\": \"abc\", \"arr\":[1,2,3]}";
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(uri))
+                .header("Content-Type", "text/plain")
+                .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
+                .build();
+
+        // when:
+        HttpResponse<String> response = c.send(request, HttpResponse.BodyHandlers.ofString());
+
+        // then:
+        assertEquals(200, response.statusCode());
+        assertEquals(bodyJson, response.body());
+    }
 }

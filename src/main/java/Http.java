@@ -3,7 +3,8 @@ public class Http {
     public static final int MAX_HEADER_LENGTH = 1024 * 8;
 
     public enum Method {
-        GET
+        GET,
+        POST
     }
 
     public enum Status {
