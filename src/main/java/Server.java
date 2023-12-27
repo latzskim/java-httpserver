@@ -17,14 +17,14 @@ enum State {
 public class Server {
     private int port;
     private final Map<Http.Method, Map<String, RequestHandler<?>>> handlers;
-    private final Map<java.lang.Class<?>, BodySerializer<?>> serializers;
-    private final BodySerializer<?> defaultSerializer;
-
     private State state;
 
     private Server(ServerBuilder serverBuilder) {
         this.port = serverBuilder.port;
-        this.defaultSerializer = serverBuilder.serializer;
+        BodySerializers
+                .getInstance()
+                .setDefaultSerializer(serverBuilder.serializer);
+
 
         this.state = State.READY;
 
@@ -32,8 +32,9 @@ public class Server {
         Arrays.stream(Http.Method.values())
                 .forEach((httpMethod) -> handlers.put(httpMethod, new HashMap<>()));
 
-        this.serializers = new HashMap<>();
-        this.serializers.put(String.class, new TextSerializer());
+        BodySerializers
+                .getInstance()
+                .registerSerializer(String.class, new TextSerializer());
     }
 
     public static ServerBuilder builder() {
@@ -103,7 +104,8 @@ public class Server {
         }
     }
 
-    private void handleConnection(Socket sock) throws IOException, SerializeException, URISyntaxException {
+    private void handleConnection(Socket sock)
+            throws IOException, SerializeException, URISyntaxException, DeserializeException {
         var req = Request.from(sock.getInputStream());
 
         var methodHandlers = this.handlers.get(req.getMethod());
@@ -123,7 +125,6 @@ public class Server {
         handleResponse(response, sock.getOutputStream());
     }
 
-    @SuppressWarnings("unchecked")
     private <T> void handleResponse(Response<T> response, OutputStream outputStream) throws SerializeException {
         PrintWriter w = new PrintWriter(outputStream);
 
@@ -140,14 +141,7 @@ public class Server {
             return;
         }
 
-        BodySerializer<T> serializer = (BodySerializer<T>) this.serializers.get(body.getClass());
-        if (serializer != null) {
-            w.write(serializer.serialize(body));
-            w.flush();
-            return;
-        }
-
-        w.write(((BodySerializer<T>) this.defaultSerializer).serialize(body));
+        w.write(BodySerializers.getInstance().serialize(body));
         w.flush();
     }
 
@@ -199,7 +193,6 @@ public class Server {
             if (this.serializer == null) {
                 this.serializer = new GsonDefaultSerializer<>();
             }
-
             return new Server(this);
         }
     }

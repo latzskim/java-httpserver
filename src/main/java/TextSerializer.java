@@ -20,7 +20,7 @@ public class TextSerializer implements BodySerializer<String> {
     }
 
     @Override
-    public String serialize(String clazz) throws SerializeException {
-        return clazz;
+    public String serialize(String obj) throws SerializeException {
+        return obj;
     }
 }

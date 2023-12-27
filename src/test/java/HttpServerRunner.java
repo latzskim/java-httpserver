@@ -76,7 +76,7 @@ class HttpServerRunner {
             throw new RuntimeException("always exception");
         });
 
-        server.addRoute(Http.Method.POST, "/integration/echo", request -> {
+        server.addRoute(Http.Method.POST, "/integration/echoraw", request -> {
             var headers = request.getHeaders();
             var bodyLength = Integer.parseInt(headers.getFirst("Content-Length"));
             var bodyReader = request.bodyStream();
@@ -92,6 +92,17 @@ class HttpServerRunner {
             return Response.builder()
                     .status(Http.Status.OK)
                     .body(new String(buf))
+                    .build();
+        });
+
+        server.addRoute(Http.Method.POST, "/integration/echojson", request -> {
+            var bodyObject = BodySerializers
+                    .getInstance()
+                    .deserialize(request.body(), TestDTO.class);
+
+            return Response.builder()
+                    .status(Http.Status.OK)
+                    .body(bodyObject)
                     .build();
         });
     }

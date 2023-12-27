@@ -1,3 +1,4 @@
+import java.util.Objects;
 
 enum TestEnum {
     E1,
@@ -32,6 +33,19 @@ public class TestDTO {
         c2 = '2';
         testEnum = TestEnum.E2;
         p = new Point<>(1, 2);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TestDTO testDTO = (TestDTO) o;
+        return i == testDTO.i && Float.compare(f, testDTO.f) == 0 && Double.compare(d, testDTO.d) == 0 && c == testDTO.c && Objects.equals(i2, testDTO.i2) && Objects.equals(f2, testDTO.f2) && Objects.equals(d2, testDTO.d2) && Objects.equals(s, testDTO.s) && Objects.equals(c2, testDTO.c2) && testEnum == testDTO.testEnum && Objects.equals(p, testDTO.p);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(i, i2, f, f2, d, d2, s, c, c2, testEnum, p);
     }
 
     public int getI() {

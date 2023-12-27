@@ -1,3 +1,4 @@
+import com.google.gson.Gson;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -154,8 +155,8 @@ class ServerTest {
     }
 
     @Test
-    public void shouldReturnPOSTBody() throws IOException, InterruptedException {
-        var uri = String.format("http://localhost:%s/integration/echo", runner.getPort());
+    public void shouldReturnRawPOSTBody() throws IOException, InterruptedException {
+        var uri = String.format("http://localhost:%s/integration/echoraw", runner.getPort());
 
         var bodyJson = "{\"test\": \"abc\", \"arr\":[1,2,3]}";
         HttpRequest request = HttpRequest.newBuilder()
@@ -169,6 +170,38 @@ class ServerTest {
 
         // then:
         assertEquals(200, response.statusCode());
+        assertEquals(
+                "text/plain; charset=UTF-8",
+                response.headers().firstValue("Content-Type").get());
         assertEquals(bodyJson, response.body());
+    }
+
+    @Test
+    public void shouldReturnJsonPOSTBody() throws IOException, InterruptedException {
+        var uri = String.format("http://localhost:%s/integration/echojson", runner.getPort());
+
+        var sentTestDTO = new TestDTO();
+        Gson gson = new Gson();
+        var sentBodyJson = gson.toJson(sentTestDTO);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(uri))
+                .header("Content-Type", "text/plain")
+                .POST(HttpRequest.BodyPublishers.ofString(sentBodyJson))
+                .build();
+
+        // when:
+        HttpResponse<String> response = c.send(request, HttpResponse.BodyHandlers.ofString());
+
+        // then:
+        assertEquals(200, response.statusCode());
+        assertEquals(
+                "application/json; charset=UTF-8",
+                response.headers().firstValue("Content-Type").get());
+
+        var receivedTestJson = response.body();
+        var receivedTestDTO = gson.fromJson(response.body(), TestDTO.class);
+        assertTrue(receivedTestDTO.equals(sentTestDTO));
+        assertEquals(receivedTestJson, sentBodyJson);
     }
 }

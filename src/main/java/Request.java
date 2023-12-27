@@ -72,13 +72,13 @@ public class Request {
             lineLen++;
             if (readByte == '\n' && lastByte == '\r') {
                 if (lineLen == 2) {
-                    headerBytes[headerLen-1] = (byte) readByte;
+                    headerBytes[headerLen - 1] = (byte) readByte;
                     break;
                 }
                 lineLen = 0;
             }
 
-            headerBytes[headerLen-1] = (byte) readByte;
+            headerBytes[headerLen - 1] = (byte) readByte;
             lastByte = readByte;
         }
 
@@ -114,16 +114,18 @@ public class Request {
         return this.query;
     }
 
-    public <T> T body() {
-        throw new RuntimeException("not implemented yet");
-    }
-
     public InputStream bodyStream() {
         return this.bodyReader;
     }
 
     public Headers getHeaders() {
         return this.headers;
+    }
+
+    public Reader body() throws IOException {
+        var len = Integer.parseInt(this.headers.getFirst("Content-Length"));
+        var str = new String(bodyReader.readNBytes(len));
+        return new StringReader(str);
     }
 }
 
